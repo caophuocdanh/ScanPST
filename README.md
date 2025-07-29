@@ -2,7 +2,7 @@
 
 Đây là một công cụ có giao diện đồ họa (GUI) được viết bằng Python để tự động hóa tiện ích `SCANPST.EXE` của Microsoft. Mục đích chính là giúp người dùng sửa chữa hàng loạt các file dữ liệu Outlook (.pst, .ost) một cách nhanh chóng và tiện lợi, thay vì phải thao tác thủ công cho từng file.
 
-![Ảnh chụp màn hình của ứng dụng](httpsd://raw.githubusercontent.com/danhcp/scanpst/main/screenshot.png)
+![Ảnh chụp màn hình của ứng dụng](screenshot.png)
 
 ## Tính năng chính
 
