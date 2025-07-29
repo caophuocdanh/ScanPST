@@ -57,7 +57,15 @@ class ScanPstApp:
         settings_frame.columnconfigure(1, weight=1)
 
         self.backup_check = ttk.Checkbutton(settings_frame, text="Tạo file backup (.bak) trước khi sửa", variable=self.create_backup, bootstyle="primary-round-toggle")
-        self.backup_check.grid(row=4, column=0, columnspan=2, sticky=W, pady=10)
+        self.backup_check.grid(row=4, column=0, columnspan=2, sticky=W, pady=(10, 0))
+
+        # <<< THAY ĐỔI: THÊM SPINBOX CHO SỐ LẦN LẶP >>>
+        self.loop_count = tk.IntVar(value=1)
+        loop_label = ttk.Label(settings_frame, text="3. Số lần lặp lại quá trình sửa (1-3):")
+        loop_label.grid(row=5, column=0, columnspan=2, sticky=W, pady=(15, 5))
+        self.loop_spinbox = ttk.Spinbox(settings_frame, from_=1, to=3, textvariable=self.loop_count, state='readonly', width=8, bootstyle="primary")
+        self.loop_spinbox.grid(row=6, column=0, sticky=W)
+        # <<< KẾT THÚC THAY ĐỔI >>>
 
         # 2. KHUNG HÀNH ĐỘNG (Ở giữa, ngay dưới cấu hình)
         action_frame = ttk.Frame(main_container)
@@ -104,22 +112,34 @@ class ScanPstApp:
         if not self.files_to_scan: messagebox.showerror("Lỗi", "Bạn chưa chọn file PST/OST nào để sửa."); return
         scanpst_path = OFFICE_PATHS[selected_key]
         self.set_controls_state("disabled")
-        repair_thread = threading.Thread(target=self.run_repair_logic, args=(scanpst_path, list(self.files_to_scan), self.create_backup.get()))
+        # <<< THAY ĐỔI: TRUYỀN SỐ LẦN LẶP VÀO THREAD >>>
+        loop_count = self.loop_count.get()
+        repair_thread = threading.Thread(target=self.run_repair_logic, args=(scanpst_path, list(self.files_to_scan), self.create_backup.get(), loop_count))
         repair_thread.daemon = True; repair_thread.start()
 
-    def run_repair_logic(self, scanpst_path, files_to_process, create_backup):
+    def run_repair_logic(self, scanpst_path, files_to_process, create_backup, loop_count):
         try:
             self.log("="*50, level='header')
-            self.log(f"Bắt đầu quá trình với {len(files_to_process)} file đã chọn.", level='info')
+            self.log(f"Bắt đầu quá trình với {len(files_to_process)} file. Số lần lặp: {loop_count}", level='info')
             if not PYWINAUTO_AVAILABLE: self.log("[LỖI] Thư viện 'pywinauto' chưa được cài đặt.", level='error'); return
+            
             success_count, fail_count = 0, 0
-            for i, file_path in enumerate(files_to_process):
-                self.log(f"\n--- Xử lý file {i+1}/{len(files_to_process)} ---", level='header')
-                if self.repair_single_file(file_path, scanpst_path, create_backup): success_count += 1
-                else: fail_count += 1
-            self.log("\n================ TỔNG KẾT ================", level='header')
+            # <<< THAY ĐỔI: VÒNG LẶP LỚN CHO TOÀN BỘ QUÁ TRÌNH >>>
+            for loop_num in range(loop_count):
+                self.log(f"\n==================== LƯỢT SỬA {loop_num + 1}/{loop_count} ====================", level='header')
+                # Reset đếm cho mỗi lượt nếu muốn theo dõi riêng, hoặc giữ nguyên để đếm tổng
+                
+                for i, file_path in enumerate(files_to_process):
+                    self.log(f"\n--- [Lượt {loop_num+1}] Xử lý file {i+1}/{len(files_to_process)} ---", level='header')
+                    if self.repair_single_file(file_path, scanpst_path, create_backup): 
+                        if loop_num == loop_count - 1: success_count += 1 # Chỉ đếm ở lượt cuối
+                    else: 
+                        if loop_num == loop_count - 1: fail_count += 1 # Chỉ đếm ở lượt cuối
+            
+            self.log("\n================ TỔNG KẾT CUỐI CÙNG ================", level='header')
             self.log(f"Hoàn thành: {success_count} file.", level='success')
             self.log(f"Thất bại/Bỏ qua: {fail_count} file.", level='error' if fail_count > 0 else 'step')
+
         except Exception as e: self.log(f"[LỖI NGHIÊM TRỌNG] Lỗi không mong muốn: {e}", level='error')
         finally: self.set_controls_state("normal")
 
@@ -136,6 +156,8 @@ class ScanPstApp:
         combobox_state = 'readonly' if state == "normal" else 'disabled'
         self.repair_button.config(state=state); self.select_files_button.config(state=state)
         self.office_combobox.config(state=combobox_state); self.backup_check.config(state=state)
+        # <<< THAY ĐỔI: VÔ HIỆU HÓA SPINBOX KHI CHẠY >>>
+        self.loop_spinbox.config(state=state)
         
     def repair_single_file(self, pst_path, scanpst_path, create_backup):
         self.log(f"[*] Đang xử lý file: {os.path.basename(pst_path)}", level='info')
