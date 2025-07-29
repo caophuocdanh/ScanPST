@@ -176,7 +176,7 @@ class ScanPstApp:
             dlg.child_window(title="Start", control_type="Button").click()
             self.log("    [3] Đã nhấn 'Start'. Đang quét file...", level='step')
 
-            scan_timeout = 7200; start_time = time.time(); scan_finished = False
+            scan_timeout = 12000; start_time = time.time(); scan_finished = False
             while time.time() - start_time < scan_timeout:
                 repair_button = dlg.child_window(title="Repair", control_type="Button")
                 if repair_button.exists() and repair_button.is_enabled():
