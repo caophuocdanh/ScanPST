@@ -63,7 +63,7 @@ class ScanPstApp:
         self.loop_count = tk.IntVar(value=1)
         loop_label = ttk.Label(settings_frame, text="3. Số lần lặp lại quá trình sửa (1-3):")
         loop_label.grid(row=5, column=0, columnspan=2, sticky=W, pady=(15, 5))
-        self.loop_spinbox = ttk.Spinbox(settings_frame, from_=1, to=3, textvariable=self.loop_count, state='readonly', width=8, bootstyle="primary")
+        self.loop_spinbox = ttk.Spinbox(settings_frame, from_=1, to=10, textvariable=self.loop_count, state='readonly', width=8, bootstyle="primary")
         self.loop_spinbox.grid(row=6, column=0, sticky=W)
         # <<< KẾT THÚC THAY ĐỔI >>>
 
