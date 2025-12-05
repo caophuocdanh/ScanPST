@@ -5,6 +5,7 @@ import tkinter as tk
 import ttkbootstrap as ttk
 from ttkbootstrap.constants import *
 from tkinter import filedialog, messagebox, scrolledtext
+import sys
 
 try:
     from pywinauto.application import Application
@@ -28,6 +29,14 @@ class ScanPstApp:
         self.root = root
         self.root.title("Công Cụ Tự Động Sửa File PST/OST @danhcp")
         self.root.geometry("750x600")
+        
+        # Thêm icon cho window
+        try:
+            icon_path = self.get_icon_path()
+            if os.path.exists(icon_path):
+                self.root.iconbitmap(icon_path)
+        except Exception as e:
+            pass  # Nếu không có icon, không báo lỗi
 
         self.files_to_scan = []
         self.file_selection_info = tk.StringVar(value="Chưa chọn file nào")
@@ -40,7 +49,7 @@ class ScanPstApp:
         # <<< THAY ĐỔI: TÁI CẤU TRÚC LAYOUT >>>
 
         # 1. KHUNG CẤU HÌNH (Phía trên)
-        settings_frame = ttk.LabelFrame(main_container, text=" Cấu Hình ", padding=15, bootstyle="primary")
+        settings_frame = ttk.Labelframe(main_container, text=" Cấu Hình ", padding=15, bootstyle="primary")
         settings_frame.pack(side=TOP, fill=X, pady=(0, 10))
 
         label1 = ttk.Label(settings_frame, text="1. Chọn phiên bản Office của bạn:")
@@ -76,7 +85,7 @@ class ScanPstApp:
         self.repair_button.pack(fill=X, ipady=5)
 
         # 3. KHUNG LOG (Dưới cùng, chiếm toàn bộ không gian còn lại)
-        log_frame = ttk.LabelFrame(main_container, text=" Trạng Thái Hoạt Động ", padding=15, bootstyle="info")
+        log_frame = ttk.Labelframe(main_container, text=" Trạng Thái Hoạt Động ", padding=15, bootstyle="info")
         log_frame.pack(side=TOP, fill=BOTH, expand=YES)
         
         self.log_widget = scrolledtext.ScrolledText(log_frame, wrap=tk.WORD, state='disabled', font=("Segoe UI", 9), relief=FLAT)
@@ -91,6 +100,16 @@ class ScanPstApp:
         self.populate_office_combobox()
 
     # --- Các hàm logic không thay đổi ---
+    def get_icon_path(self):
+        """Lấy đường dẫn icon từ thư mục hiện tại hoặc từ PyInstaller bundle"""
+        if getattr(sys, 'frozen', False):
+            # Chạy từ PyInstaller .exe
+            base_path = sys._MEIPASS
+        else:
+            # Chạy từ .py file
+            base_path = os.path.dirname(os.path.abspath(__file__))
+        return os.path.join(base_path, 'icon.ico')
+    
     def log(self, message, level="normal"):
         def _log(): self.log_widget.config(state='normal'); self.log_widget.insert(tk.END, message + "\n", level); self.log_widget.config(state='disabled'); self.log_widget.see(tk.END)
         self.root.after(0, _log)
@@ -176,8 +195,8 @@ class ScanPstApp:
             dlg.child_window(title="Start", control_type="Button").click()
             self.log("    [3] Đã nhấn 'Start'. Đang quét file...", level='step')
 
-            scan_timeout = 12000; start_time = time.time(); scan_finished = False
-            while time.time() - start_time < scan_timeout:
+            scan_finished = False
+            while True:
                 repair_button = dlg.child_window(title="Repair", control_type="Button")
                 if repair_button.exists() and repair_button.is_enabled():
                     self.log("    [4] Quét xong. Phát hiện có lỗi.", level='info')
@@ -188,8 +207,7 @@ class ScanPstApp:
                         else: self.log("    [5] Giữ nguyên tùy chọn backup.", level='step')
                     repair_button.click()
                     self.log("    [6] Đã nhấn 'Repair'. Bắt đầu sửa lỗi...", level='step')
-                    repair_timeout = scan_timeout - (time.time() - start_time); repair_start_time = time.time()
-                    while time.time() - repair_start_time < repair_timeout:
+                    while True:
                         try:
                             popup = app.window(title="Microsoft Outlook Inbox Repair Tool", top_level_only=True)
                             if popup.child_window(title="Yes").exists():
@@ -201,7 +219,6 @@ class ScanPstApp:
                         except (TimeoutError, ElementNotFoundError): pass
                         time.sleep(0.5)
                     if scan_finished: break
-                    else: raise TimeoutError("Quá trình sửa lỗi quá thời gian.")
 
                 ok_button = dlg.child_window(title="OK", control_type="Button")
                 if ok_button.exists() and ok_button.is_enabled():
@@ -209,7 +226,6 @@ class ScanPstApp:
                     ok_button.click_input(); scan_finished = True; break
                 time.sleep(0.5)
             
-            if not scan_finished: raise TimeoutError("Quá trình quét/sửa lỗi quá thời gian.")
             if dlg.exists(): dlg.close()
             return True
 

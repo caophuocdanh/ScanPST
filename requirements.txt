@@ -1,0 +1,21 @@
+# SCANPST Auto Repair Tool - Requirements
+# Công Cụ Tự Động Sửa File PST/OST
+
+# GUI Framework
+ttkbootstrap>=1.6.1
+
+# Windows UI Automation
+pywinauto>=0.6.8
+
+# Build tool (optional, chỉ cần khi build .exe)
+pyinstaller>=5.0.0
+
+# Standard Library (không cần cài, đã có sẵn):
+# - os
+# - time
+# - threading
+# - sys
+# - tkinter
+# - filedialog
+# - messagebox
+# - scrolledtext
