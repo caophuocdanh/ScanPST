@@ -11,11 +11,11 @@ pywinauto>=0.6.8
 pyinstaller>=5.0.0
 
 # Standard Library (không cần cài, đã có sẵn):
-# - os
-# - time
-# - threading
-# - sys
-# - tkinter
-# - filedialog
-# - messagebox
-# - scrolledtext
+os
+time
+threading
+sys
+tkinter
+filedialog
+messagebox
+scrolledtext
